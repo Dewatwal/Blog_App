@@ -83,10 +83,60 @@ export const deleteBlogById = async (req, res) => {
   try{
     const {id} = req.body;
     await Blog.findByIdAndDelete(id);
+
+    await Comment.deleteMany({blog:id});
     res.json({success:true, message:"Blog deleted successfully"});
+
   }
   catch (error) {
     console.error("Error deleting blog by ID:", error);
     res.json({ success: false, message: "Server error while deleting blog" });
+  } 
+}
+
+export const togglePublish = async (req, res) => {
+  try{
+    const {id} = req.body;
+    const blog = await Blog.findById(id);
+    if(!blog){
+      return res.json({success:false, message:"Blog not found"});
+    }
+    blog.isPublished = !blog.isPublished;
+    await blog.save();
+    res.json({success:true, message:"Blog publish status toggled successfully"});
+  }
+  catch (error) {
+    console.error("Error toggling publish status:", error);
+    res.json({ success: false, message: "Server error while toggling publish status" });
+  }   
+}
+
+export const addComment = async (req, res) => {
+      try{
+        const {blog,name,content}=req.body;
+        if(!blog || !name || !content){
+          return res.json({success:false, message:"All fields are required"});
+        } 
+        await Comment.create({
+          blog,name,content
+        });
+        res.json({success:true, message:"Comment added successfully"});   
+      }
+      catch (error) {
+        console.error("Error adding comment:", error);
+        res.json({ success: false, message: "Server error while adding comment" });
+      } 
+}
+
+export const getBlogComments = async (req, res) => {
+  try{
+    const {blogId} = req.body;
+    const comments = await Comment.find 
+    ({blog:blogId, isApproved:true}).sort({createdAt:-1});
+    res.json({success:true, comments});
+  }
+  catch (error) {
+    console.error("Error fetching comments:", error);
+    res.json({ success: false, message: "Server error while fetching comments" });
   } 
 }
